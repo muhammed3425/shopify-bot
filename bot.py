@@ -30,3 +30,12 @@ def get_status():
 threading.Thread(target=bot_loop).start()
 
 app.run(host="0.0.0.0", port=10000)
+sales = count_sales()
+
+def should_add(product_name):
+    if product_name in sales:
+        if sales[product_name] >= 3:
+            return True
+        else:
+            return False
+    return True  # yeni ürünse dene
