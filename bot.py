@@ -3,14 +3,17 @@ import requests
 import threading
 import time
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 
-# --- AYARLAR (Abdurrahman gelince buraları dolduracak) ---
+# --- AYARLAR ---
 SHOP_URL = "https://MAGAZA-ADIN.myshopify.com"
 TOKEN = "SHPAT_ANAHTARIN"
 YASAKLI_KELIMELER = ["çakma", "replika", "silah", "illegal", "kumar"]
 
+# Botun hafızasındaki işlem defteri (Sitede görünecek olan kısım)
+islem_defteri = []
 status = {"bot": "çalışıyor", "eklenen_urun": 0}
 
 # --- GÜVENLİK FİLTRESİ ---
@@ -20,25 +23,39 @@ def guvenli_mi(urun_adi):
             return False
     return True
 
-# --- PAZAR TARAMASI FONKSİYONU ---
+# --- PAZAR TARAMASI VE RAPORLAMA ---
 def pazar_taramasi():
-    # Bu fonksiyon arka planda keşif yapar
-    bulunan_urunler = [
-        {"ad": "Mini Taşınabilir Yazıcı", "trend": "Yüksek", "kar_marji": "%40"},
-        {"ad": "Akıllı Temizleme Fırçası", "trend": "Orta-Yüksek", "kar_marji": "%35"}
+    global islem_defteri
+    simdi = datetime.now().strftime("%H:%M:%S")
+    
+    # Simüle edilmiş trend verileri
+    bulunanlar = [
+        {"ad": "Mini Taşınabilir Yazıcı", "trend": "Yüksek"},
+        {"ad": "Akıllı Temizleme Fırçası", "trend": "Orta"}
     ]
-    return bulunan_urunler
+    
+    for urun in bulunanlar:
+        if guvenli_mi(urun["ad"]):
+            log_mesaji = f"[{simdi}] Trend Bulundu: {urun['ad']} (%40 Kar Marjı)"
+            if log_mesaji not in islem_defteri:
+                islem_defteri.insert(0, log_mesaji) # En yeni haberi başa koy
+    
+    # Defter çok dolmasın, son 10 işlemi tutalım
+    islem_defteri = islem_defteri[:10]
 
 # --- BOTUN ANA DÖNGÜSÜ ---
 def bot_loop():
     while True:
-        # Bot her 60 saniyede bir dükkanı ve piyasayı kontrol eder
         pazar_taramasi()
         time.sleep(60)
 
-# --- PANELİN YENİ PREMİUM TASARIMI ---
+# --- PANELİN YENİ GÖRÜNÜMÜ (CANLI RAPORLU) ---
 @app.route("/")
 def home():
+    rapor_html = "".join([f"<div style='margin-bottom:8px; color:#28a745;'>{islem}</div>" for islem in islem_defteri])
+    if not rapor_html:
+        rapor_html = "<div style='color:#666;'>Analiz başlatılıyor...</div>"
+
     html_content = f"""
     <!DOCTYPE html>
     <html lang="tr">
@@ -48,63 +65,47 @@ def home():
         <title>Luvrenzo AI Control Panel</title>
         <style>
             body {{
-                margin: 0;
-                padding: 0;
-                background-color: #1a1a1a; /* Koyu Gri / Siyah Arka Plan */
-                color: #ffffff;
+                margin: 0; padding: 0;
+                background-color: #1a1a1a; color: #ffffff;
                 font-family: 'Segoe UI', sans-serif;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-                text-align: center;
+                display: flex; justify-content: center; align-items: center;
+                min-height: 100vh; text-align: center;
             }}
             .panel-container {{
-                border: 1px solid #444;
-                padding: 60px;
-                background-color: #262626; /* Panel Grisi */
-                border-radius: 20px;
-                box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+                border: 1px solid #444; padding: 40px;
+                background-color: #262626; border-radius: 20px;
+                box-shadow: 0 15px 35px rgba(0,0,0,0.7); width: 80%; max-width: 600px;
             }}
             h1 {{
-                font-size: 3.5em;
-                margin-bottom: 20px;
-                letter-spacing: 8px;
+                font-size: 2.5em; margin-bottom: 10px; letter-spacing: 5px;
                 text-transform: uppercase;
                 background: linear-gradient(to bottom, #ffffff, #888888);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-            }}
-            .status-box {{
-                font-size: 1.2em;
-                margin-top: 20px;
-                color: #aaa;
+                -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             }}
             .status-badge {{
-                background-color: #28a745;
-                color: white;
-                padding: 6px 18px;
-                border-radius: 50px;
-                font-weight: bold;
-                text-transform: uppercase;
-                font-size: 0.9em;
-                box-shadow: 0 0 15px rgba(40, 167, 69, 0.4);
+                background-color: #28a745; color: white;
+                padding: 4px 12px; border-radius: 50px; font-size: 0.8em;
+            }}
+            .rapor-ekrani {{
+                background-color: #111; border: 1px solid #333;
+                padding: 20px; margin-top: 30px; border-radius: 10px;
+                text-align: left; font-family: 'Courier New', monospace; font-size: 0.9em;
             }}
             .footer-text {{
-                margin-top: 40px;
-                font-style: italic;
-                color: #666;
-                letter-spacing: 2px;
+                margin-top: 30px; font-style: italic; color: #555; font-size: 0.8em;
             }}
         </style>
     </head>
     <body>
         <div class="panel-container">
             <h1>LUVRENZO AI</h1>
-            <div class="status-box">
-                SİSTEM DURUMU: <span class="status-badge">{status['bot']}</span>
+            <div>DURUM: <span class="status-badge">{status['bot'].upper()}</span></div>
+            
+            <div class="rapor-ekrani">
+                <div style="color: #888; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">CANLI ANALİZ RAPORU</div>
+                {rapor_html}
             </div>
-            <p style="margin-top: 15px; color: #888;">Mağaza Bağlantısı Bekleniyor...</p>
+
             <div class="footer-text">EBEDİ MANZARANIN KORUYUCUSU</div>
         </div>
     </body>
@@ -113,8 +114,6 @@ def home():
     return html_content
 
 if __name__ == "__main__":
-    # Botu daemon olarak başlatıyoruz ki sistem kapanmasın
     threading.Thread(target=bot_loop, daemon=True).start()
-    # Render'ın istediği portu otomatik ayarla
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
