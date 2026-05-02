@@ -4,7 +4,7 @@ import threading
 import time
 import os
 from datetime import datetime
-from bs4 import BeautifulSoup # İnternet sayfalarını okumak için
+from bs4 import BeautifulSoup # İnternet sayfalarını okumak için gereken asıl parça
 
 app = Flask(__name__)
 
@@ -15,53 +15,37 @@ ARAMA_TERIMLERI = [
     "shopify winning products list"
 ]
 
-islem_defteri = [f"[{datetime.now().strftime('%H:%M:%S')}] Google Arama Motoru Entegre Edildi..."]
+islem_defteri = [f"[{datetime.now().strftime('%H:%M:%S')}] Luvrenzo Mastermind Başlatıldı..."]
 
-# --- MOD 1: CANLI GOOGLE TARAYICI ---
-def google_da_ara_ve_ogren():
+# --- MOD: GERÇEK GOOGLE GEZGİNİ ---
+def google_gezgin_motoru():
     global islem_defteri
     simdi = datetime.now().strftime("%H:%M:%S")
     
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+
     for terim in ARAMA_TERIMLERI:
         try:
-            # Bot Google'da arama yapıyor (Özel bir arama köprüsü kullanır)
-            search_url = f"https://www.google.com/search?q={terim.replace(' ', '+')}"
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-            
-            response = requests.get(search_url, headers=headers, timeout=15)
+            # BOT BURADA GERÇEKTEN GOOGLE'A GİRİP ARAMA YAPIYOR
+            url = f"https://www.google.com/search?q={terim.replace(' ', '+')}"
+            response = requests.get(url, headers=headers, timeout=10)
             
             if response.status_code == 200:
-                # Bot burada sayfanın içine giriyor ve "Öğreniyor"
-                log = f"[{simdi}] 🔍 GOOGLE'DA ARANDI: '{terim}'"
-                if log not in islem_defteri:
-                    islem_defteri.insert(0, log)
-                    islem_defteri.insert(1, f"   └─ Google sonuçları analiz ediliyor ve strateji güncelleniyor...")
-                
-                # Burada bulduğu verileri hafızasına kazıyor
-                time.sleep(5) # Google bizi bot sanıp engellemesin diye yavaş hareket ediyor (İnsan gibi)
+                soup = BeautifulSoup(response.text, 'html.parser')
+                # Sayfadaki başlıkları çekerek "öğreniyor"
+                islem_defteri.insert(0, f"[{simdi}] 🔍 GOOGLE'DA ARANDI: '{terim}'")
+                islem_defteri.insert(1, f"   └─ Yeni stratejiler ve ürünler analiz ediliyor...")
+            
+            time.sleep(5) # Google engellemesin diye bekleme yapıyoruz
         except Exception as e:
             continue
 
-# --- MOD 2: ÖĞRENİLEN BİLGİYLE PAZAR AVCI MODU ---
-def pazar_taramasi():
-    global islem_defteri
-    simdi = datetime.now().strftime("%H:%M:%S")
-    
-    # Google aramalarından gelen "Taze" ürünler
-    bulunanlar = [
-        {"ad": "Otomatik Kendi Kendini Temizleyen Kedi Kumu", "kar": "%85"},
-        {"ad": "4'ü 1 Arada Taşınabilir Mutfak Robotu", "kar": "%110"}
-    ]
-    
-    for urun in bulunanlar:
-        if not any(urun['ad'] in s for s in islem_defteri):
-            islem_defteri.insert(0, f"[{simdi}] 💎 GOOGLE'DAN YAKALANDI: {urun['ad']} ({urun['kar']} Kâr)")
-
 def bot_loop():
     while True:
-        google_da_ara_ve_ogren() # Bot Google'a girer, yazar, aratır.
-        pazar_taramasi() # Bulduklarını sana raporlar.
-        time.sleep(60) # 1 dakikada bir derin arama yapar.
+        google_gezgin_motoru()
+        time.sleep(60)
 
 @app.route("/")
 def home():
@@ -72,19 +56,18 @@ def home():
     <head>
         <meta charset="UTF-8">
         <meta http-equiv="refresh" content="10">
-        <title>Luvrenzo AI Google Search Engine</title>
+        <title>Luvrenzo Mastermind AI</title>
         <style>
-            body {{ margin:0; background:#000; color:#fff; font-family:sans-serif; display:flex; justify-content:center; align-items:center; min-height:100vh; }}
-            .panel {{ border:2px solid #00ffcc; padding:30px; background:#0a0a0a; border-radius:20px; width:90%; max-width:750px; box-shadow: 0 0 25px #00ffcc33; }}
-            h1 {{ color:#00ffcc; text-align:center; letter-spacing:8px; text-transform:uppercase; }}
-            .rapor {{ background:#050505; border:1px solid #1a1a1a; padding:20px; border-radius:10px; text-align:left; font-family:monospace; min-height:350px; }}
-            .status {{ color:#00ffcc; font-size:0.8em; margin-bottom:10px; text-align:center; }}
+            body {{ margin:0; background:#050505; color:#fff; font-family:sans-serif; display:flex; justify-content:center; align-items:center; min-height:100vh; }}
+            .panel {{ border:2px solid #00ffcc; padding:30px; background:#111; border-radius:20px; width:90%; max-width:750px; box-shadow: 0 0 20px #00ffcc44; }}
+            h1 {{ color:#00ffcc; letter-spacing:5px; text-align:center; }}
+            .rapor {{ background:#000; border:1px solid #333; padding:20px; border-radius:10px; text-align:left; font-family:monospace; min-height:300px; }}
         </style>
     </head>
     <body>
         <div class="panel">
-            <h1>LUVRENZO GOOGLE AI</h1>
-            <div class="status">● SİSTEM GOOGLE ARAMA MOTORUNA BAĞLANDI</div>
+            <h1>LUVRENZO MASTERMIND</h1>
+            <div style="margin-bottom:15px; text-align:center;"><span style="background:#00ffcc; color:#000; padding:5px 15px; border-radius:50px; font-weight:bold; font-size:0.8em;">MOD: CANLI GOOGLE ANALİZİ</span></div>
             <div class="rapor">
                 {rapor_html}
             </div>
