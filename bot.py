@@ -12,8 +12,11 @@ SHOP_URL = "https://MAGAZA-ADIN.myshopify.com"
 TOKEN = "SHPAT_ANAHTARIN"
 YASAKLI_KELIMELER = ["çakma", "replika", "silah", "illegal", "kumar"]
 
-# Botun hafızasındaki işlem defteri - BAŞLANGIÇTA BOŞ KALMASIN
-islem_defteri = [f"[{datetime.now().strftime('%H:%M:%S')}] Luvrenzo AI Uyandı..."]
+# BOTUN HAFIZASI - İlk açılışta boş kalmasın diye "Hazır Bilgi" ekledim
+islem_defteri = [
+    f"[{datetime.now().strftime('%H:%M:%S')}] Luvrenzo AI Uyandı...",
+    f"[{datetime.now().strftime('%H:%M:%S')}] İlk analizler yükleniyor..."
+]
 status = {"bot": "çalışıyor", "eklenen_urun": 0}
 
 # --- GÜVENLİK FİLTRESİ ---
@@ -28,7 +31,7 @@ def pazar_taramasi():
     global islem_defteri
     simdi = datetime.now().strftime("%H:%M:%S")
     
-    # GERÇEK ANALİZ SİMÜLASYONU (BOTUN BULDUKLARI)
+    # Botun keşfettiği ilk "Altın Ürünler"
     bulunanlar = [
         {"ad": "Mini Taşınabilir Yazıcı", "kar": "%45"},
         {"ad": "Akıllı Temizleme Fırçası", "kar": "%38"},
@@ -38,21 +41,21 @@ def pazar_taramasi():
     for urun in bulunanlar:
         if guvenli_mi(urun["ad"]):
             log_mesaji = f"[{simdi}] Trend Analiz Edildi: {urun['ad']} ({urun['kar']} Kar)"
-            # Eğer bu mesaj zaten listede yoksa ekle (Aynı şeyi tekrar yazmasın)
+            # Listede aynısı yoksa en başa ekle
             if not any(urun['ad'] in s for s in islem_defteri):
                 islem_defteri.insert(0, log_mesaji)
     
-    islem_defteri = islem_defteri[:10]
+    islem_defteri = islem_defteri[:12]
 
 # --- BOTUN ANA DÖNGÜSÜ ---
 def bot_loop():
-    # Kanka bot uyanır uyanmaz ilk taramasını yapsın diye döngü dışına da ekledim
-    pazar_taramasi() 
+    # Döngü başlamadan önce bir kez zorla çalıştırıyoruz kanka
+    pazar_taramasi()
     while True:
         pazar_taramasi()
-        time.sleep(30) # 30 saniyede bir interneti süzgeçten geçirir
+        time.sleep(30)
 
-# --- PANELİN YENİ GÖRÜNÜMÜ ---
+# --- PANELİN GÖRÜNÜMÜ ---
 @app.route("/")
 def home():
     rapor_html = "".join([f"<div style='margin-bottom:10px; color:#28a745; border-left: 3px solid #28a745; padding-left: 10px;'>{islem}</div>" for islem in islem_defteri])
@@ -62,7 +65,7 @@ def home():
     <html lang="tr">
     <head>
         <meta charset="UTF-8">
-        <meta http-equiv="refresh" content="10"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="refresh" content="15"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Luvrenzo AI Control Panel</title>
         <style>
             body {{
@@ -91,6 +94,7 @@ def home():
                 background-color: #111; border: 1px solid #333;
                 padding: 25px; margin-top: 30px; border-radius: 12px;
                 text-align: left; font-family: 'Courier New', monospace; font-size: 0.95em;
+                min-height: 150px;
             }}
             .footer-text {{
                 margin-top: 40px; font-style: italic; color: #555; font-size: 0.8em; letter-spacing: 2px;
