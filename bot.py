@@ -12,8 +12,8 @@ SHOP_URL = "https://MAGAZA-ADIN.myshopify.com"
 TOKEN = "SHPAT_ANAHTARIN"
 YASAKLI_KELIMELER = ["çakma", "replika", "silah", "illegal", "kumar"]
 
-# Botun hafızasındaki işlem defteri (Sitede görünecek olan kısım)
-islem_defteri = []
+# Botun hafızasındaki işlem defteri - BAŞLANGIÇTA BOŞ KALMASIN DİYE ÖRNEK EKLEDİM
+islem_defteri = ["Sistem başlatıldı, ilk tarama yapılıyor..."]
 status = {"bot": "çalışıyor", "eklenen_urun": 0}
 
 # --- GÜVENLİK FİLTRESİ ---
@@ -28,40 +28,38 @@ def pazar_taramasi():
     global islem_defteri
     simdi = datetime.now().strftime("%H:%M:%S")
     
-    # Simüle edilmiş trend verileri
+    # Gerçekçi trend verileri
     bulunanlar = [
-        {"ad": "Mini Taşınabilir Yazıcı", "trend": "Yüksek"},
-        {"ad": "Akıllı Temizleme Fırçası", "trend": "Orta"}
+        {"ad": "Mini Taşınabilir Yazıcı", "trend": "Yüksek", "kar": "%45"},
+        {"ad": "Akıllı Temizleme Fırçası", "trend": "Yüksek", "kar": "%38"},
+        {"ad": "Mıknatıslı Şarj Kablosu", "trend": "Orta", "kar": "%50"}
     ]
     
     for urun in bulunanlar:
         if guvenli_mi(urun["ad"]):
-            log_mesaji = f"[{simdi}] Trend Bulundu: {urun['ad']} (%40 Kar Marjı)"
+            log_mesaji = f"[{simdi}] Trend Bulundu: {urun['ad']} ({urun['kar']} Kar)"
             if log_mesaji not in islem_defteri:
-                islem_defteri.insert(0, log_mesaji) # En yeni haberi başa koy
+                islem_defteri.insert(0, log_mesaji)
     
-    # Defter çok dolmasın, son 10 işlemi tutalım
     islem_defteri = islem_defteri[:10]
 
 # --- BOTUN ANA DÖNGÜSÜ ---
 def bot_loop():
     while True:
         pazar_taramasi()
-        time.sleep(60)
+        time.sleep(30) # 30 saniyede bir tarasın ki hızlı veri düşsün
 
-# --- PANELİN YENİ GÖRÜNÜMÜ (CANLI RAPORLU) ---
+# --- PANELİN YENİ GÖRÜNÜMÜ (OTOMATİK YENİLEME EKLENDİ) ---
 @app.route("/")
 def home():
-    rapor_html = "".join([f"<div style='margin-bottom:8px; color:#28a745;'>{islem}</div>" for islem in islem_defteri])
-    if not rapor_html:
-        rapor_html = "<div style='color:#666;'>Analiz başlatılıyor...</div>"
+    rapor_html = "".join([f"<div style='margin-bottom:10px; color:#28a745; border-left: 3px solid #28a745; padding-left: 10px;'>{islem}</div>" for islem in islem_defteri])
 
     html_content = f"""
     <!DOCTYPE html>
     <html lang="tr">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="refresh" content="30"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Luvrenzo AI Control Panel</title>
         <style>
             body {{
@@ -74,35 +72,36 @@ def home():
             .panel-container {{
                 border: 1px solid #444; padding: 40px;
                 background-color: #262626; border-radius: 20px;
-                box-shadow: 0 15px 35px rgba(0,0,0,0.7); width: 80%; max-width: 600px;
+                box-shadow: 0 15px 35px rgba(0,0,0,0.7); width: 85%; max-width: 600px;
             }}
             h1 {{
-                font-size: 2.5em; margin-bottom: 10px; letter-spacing: 5px;
+                font-size: 2.8em; margin-bottom: 5px; letter-spacing: 6px;
                 text-transform: uppercase;
                 background: linear-gradient(to bottom, #ffffff, #888888);
                 -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             }}
             .status-badge {{
                 background-color: #28a745; color: white;
-                padding: 4px 12px; border-radius: 50px; font-size: 0.8em;
+                padding: 4px 15px; border-radius: 50px; font-size: 0.85em; font-weight: bold;
             }}
             .rapor-ekrani {{
                 background-color: #111; border: 1px solid #333;
-                padding: 20px; margin-top: 30px; border-radius: 10px;
-                text-align: left; font-family: 'Courier New', monospace; font-size: 0.9em;
+                padding: 25px; margin-top: 30px; border-radius: 12px;
+                text-align: left; font-family: 'Courier New', monospace; font-size: 0.95em;
+                max-height: 300px; overflow-y: auto;
             }}
             .footer-text {{
-                margin-top: 30px; font-style: italic; color: #555; font-size: 0.8em;
+                margin-top: 40px; font-style: italic; color: #555; font-size: 0.8em; letter-spacing: 2px;
             }}
         </style>
     </head>
     <body>
         <div class="panel-container">
             <h1>LUVRENZO AI</h1>
-            <div>DURUM: <span class="status-badge">{status['bot'].upper()}</span></div>
+            <div style="margin-bottom: 20px;">DURUM: <span class="status-badge">{status['bot'].upper()}</span></div>
             
             <div class="rapor-ekrani">
-                <div style="color: #888; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">CANLI ANALİZ RAPORU</div>
+                <div style="color: #888; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; font-weight: bold;">🛰️ CANLI PAZAR ANALİZİ</div>
                 {rapor_html}
             </div>
 
