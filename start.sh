@@ -1,1 +1,1 @@
-python bot.py
+bash start.sh
