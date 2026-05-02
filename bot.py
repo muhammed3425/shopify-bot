@@ -1,6 +1,32 @@
+from flask import Flask, jsonify
 import time
+import threading
 
-while True:
-    print("BOT ÇALIŞIYOR")
+app = Flask(__name__)
 
-    time.sleep(60)  # 1 dakika bekle
+status = {
+    "bot": "çalışıyor",
+    "eklenen_urun": 0
+}
+
+def bot_loop():
+    while True:
+        print("BOT ÇALIŞIYOR")
+        status["eklenen_urun"] += 1
+        time.sleep(60)
+
+@app.route("/")
+def home():
+    return f"""
+    <h1>🤖 BOT PANEL</h1>
+    <p>Durum: {status['bot']}</p>
+    <p>Eklenen ürün: {status['eklenen_urun']}</p>
+    """
+
+@app.route("/status")
+def get_status():
+    return jsonify(status)
+
+threading.Thread(target=bot_loop).start()
+
+app.run(host="0.0.0.0", port=10000)
