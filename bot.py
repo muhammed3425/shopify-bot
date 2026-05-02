@@ -43,3 +43,43 @@ def should_add(product_name):
 
 if should_add(product["title"]):
     upload_to_shopify(product["title"], price(product["price"]))
+    GET /admin/api/2023-10/orders.json
+    import requests
+
+SHOP_URL = "https://YOUR_STORE.myshopify.com"
+TOKEN = "YOUR_TOKEN"
+
+def get_orders():
+    url = f"{SHOP_URL}/admin/api/2023-10/orders.json"
+
+    headers = {
+        "X-Shopify-Access-Token": TOKEN
+    }
+
+    response = requests.get(url, headers=headers)
+    data = response.json()
+
+    return data["orders"]
+def count_sales():
+    orders = get_orders()
+    
+    product_sales = {}
+
+    for order in orders:
+        for item in order["line_items"]:
+            name = item["title"]
+
+            if name not in product_sales:
+                product_sales[name] = 0
+
+            product_sales[name] += item["quantity"]
+
+    return product_sales
+    {
+ "LED Light Strip": 5,
+ "Mini Fan": 2
+    }
+    prompt = f"""
+Bu ürün {sales} adet satıldı.
+Neden satmış olabilir?
+"""
