@@ -39,3 +39,7 @@ def should_add(product_name):
         else:
             return False
     return True  # yeni ürünse dene
+    product = choose_product()
+
+if should_add(product["title"]):
+    upload_to_shopify(product["title"], price(product["price"]))
