@@ -15,42 +15,53 @@ DB_NAME = "products.db"
 
 def init_database():
     """Ürün veritabanını oluştur"""
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            product_name TEXT NOT NULL,
-            search_term TEXT,
-            url TEXT,
-            found_date TIMESTAMP,
-            trend_score INTEGER,
-            demand_level TEXT,
-            status TEXT
-        )
-    ''')
-    conn.commit()
-    conn.close()
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS products (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                product_name TEXT NOT NULL,
+                search_term TEXT,
+                url TEXT,
+                found_date TIMESTAMP,
+                trend_score INTEGER,
+                demand_level TEXT,
+                status TEXT
+            )
+        ''')
+        conn.commit()
+        conn.close()
+        print("✅ Veritabanı başarıyla oluşturuldu!")
+    except Exception as e:
+        print(f"❌ Veritabanı hatası: {e}")
 
 def save_product(product_name, search_term, url, trend_score, demand_level):
     """Ürünü veritabanına kaydet"""
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO products (product_name, search_term, url, found_date, trend_score, demand_level, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (product_name, search_term, url, datetime.now(), trend_score, demand_level, "ANALYZING"))
-    conn.commit()
-    conn.close()
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO products (product_name, search_term, url, found_date, trend_score, demand_level, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (product_name, search_term, url, datetime.now(), trend_score, demand_level, "ANALYZING"))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Kayıt hatası: {e}")
 
 def get_all_products():
     """Tüm kaydedilen ürünleri getir"""
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM products ORDER BY found_date DESC')
-    products = cursor.fetchall()
-    conn.close()
-    return products
+    try:
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM products ORDER BY found_date DESC')
+        products = cursor.fetchall()
+        conn.close()
+        return products
+    except Exception as e:
+        print(f"Ürün çekme hatası: {e}")
+        return []
 
 # --- ARAMA TERİMLERİ ---
 ARAMA_TERIMLERI = [
@@ -139,7 +150,10 @@ def google_product_search():
 def bot_loop():
     """Ana bot döngüsü"""
     while True:
-        google_product_search()
+        try:
+            google_product_search()
+        except Exception as e:
+            print(f"Bot loop hatası: {e}")
         time.sleep(300)  # 5 dakikada bir ara
 
 # --- WEB ARAYÜZÜ ---
@@ -224,7 +238,7 @@ def home():
             
             <div class="panel">
                 <h2>📊 CANLI İŞLEM KAYITI</h2>
-                <div class="rapor">{rapor_html}</div>
+                <div class="rapor">{rapor_html if rapor_html else '<p style="color:#999;">İşlem bekleniyor...</p>'}</div>
             </div>
             
             <div class="panel">
@@ -254,7 +268,9 @@ def api_products():
     return jsonify(product_list)
 
 if __name__ == "__main__":
+    print("🚀 Bot başlatılıyor...")
     init_database()
     threading.Thread(target=bot_loop, daemon=True).start()
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    print(f"✅ Sunucu {port} portunda çalışıyor")
+    app.run(host="0.0.0.0", port=port, debug=False)
